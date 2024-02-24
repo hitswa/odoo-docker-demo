@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: ${POSTGRES_HOST}
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data
+    networks:
+      - odoo-network
+
+  odoo:
+    image: odoo:${ODOO_VERSION}
+    container_name: ${ODOO_HOST}
+    restart: always
+    depends_on:
+      - ${POSTGRES_HOST}
+    ports:
+      - "${ODOO_PORT}:${ODOO_PORT}"
+    environment:
+      - DB_HOST=${POSTGRES_HOST}
+      - HOST=${POSTGRES_HOST}
+      - DB_PORT=${POSTGRES_PORT}
+      - DB_USER=${ODOO_DB_USER}
+      - DB_PASSWORD=${ODOO_DB_PASSWORD}
+      - DB_NAME=${ODOO_DB_NAME}
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - odoo-addons:/mnt/extra-addons
+    networks:
+      - odoo-network
+
+  adminer:
+    image: adminer:${ADMINER_VERSION}
+    container_name: ${ADMINER_HOST}
+    restart: always
+    depends_on:
+      - ${POSTGRES_HOST}
+    ports:
+      - "${ADMINER_PORT}:${ADMINER_PORT}"
+    networks:
+      - odoo-network
+
+networks:
+  odoo-network:
+    driver: bridge
+
+volumes:
+  odoo-db-data:
+  odoo-data:
+  odoo-addons:
